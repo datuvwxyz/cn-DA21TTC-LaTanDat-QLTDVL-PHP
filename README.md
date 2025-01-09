@@ -11,7 +11,7 @@ Website quản lý và tuyển dụng việc làm Freelancer sẽ được thi�
 ### Frontend
 - HTML/CSS/Javascript
 - Bootstrap
-- SASS
+- SCSS
 - Tailwind
 ## Kiến trúc hệ thống
 Sử dụng mô hình MVC và route để định tuyến dữ liệu đảm bảo view và dữ liệu tương tác với nhau một cách đồng bộ và hiệu quả nhất có thể
