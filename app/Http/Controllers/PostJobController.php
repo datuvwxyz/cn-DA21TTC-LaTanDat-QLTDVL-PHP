@@ -4,16 +4,48 @@ namespace App\Http\Controllers;
 
 use App\Models\Employer;
 use App\Models\Category;
+use App\Models\Freelancer;
 use App\Models\PostJob;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class PostJobController extends Controller
 {
     public function jobs_submited()
     {
-        return view('pages.users.jobs_submited');
+        $accountId = session('user_id');
+
+        $freelancer = Freelancer::where('account_id', $accountId)->first();
+
+        if (!$freelancer) {
+            return redirect()->back()->with('error', 'Không tìm thấy thông tin freelancer');
+        }
+
+        $appliedJobs = PostJob::with(['category', 'employer', 'skills'])
+            ->whereHas('freelancers', function ($query) use ($freelancer) {
+                $query->where('post_job_freelancer.freelancer_id', $freelancer->freelancer_id); // Chỉ định rõ tên bảng
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(5);
+
+        return view('pages.users.jobs_submited', compact('appliedJobs'));
     }
+
+    public function jobs_submited_detail($post_id)
+    {
+        $accountId = session('user_id');
+
+        $freelancer = Freelancer::where('account_id', $accountId)->first();
+
+        if (!$freelancer) {
+            return redirect()->back()->with('error', 'Không tìm thấy thông tin freelancer');
+        }
+        
+        $post = PostJob::with(['freelancers', 'category'])->findOrFail($post_id);
+        return view('pages.users.jobs_submited_detail', compact('post'));
+    }
+
     // Hiển thị danh sách các bài đăng tuyển dụng
     public function index(Request $request)
     {
@@ -272,7 +304,7 @@ class PostJobController extends Controller
         $request->validate([
             'cv_file' => 'required|mimes:pdf,doc,docx|max:8000'
         ], $messages);
-        
+
         try {
             $postJob = PostJob::where('post_id', $post_id)
                 ->where('status', 'Active')
@@ -294,15 +326,19 @@ class PostJobController extends Controller
 
             $file = $request->file('cv_file');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->store('cvFile', 'public', $filename);
+
+            // Sửa cách lưu file
+            $path = $request->file('cv_file')->storeAs('cvFile', $filename, 'public');
 
             $postJob->freelancers()->attach($freelancer, [
-                'cv_file' => $filename,
+                'cv_file' => $path, // Lưu đường dẫn đầy đủ
                 'applied_at' => now()
             ]);
 
             return redirect()->back()->with('success', 'Ứng tuyển thành công!');
         } catch (\Exception $e) {
+            // Log lỗi để debug
+            Log::error('Apply Job Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Có lỗi xảy ra, vui lòng thử lại sau');
         }
     }

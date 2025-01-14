@@ -86,6 +86,7 @@ Route::get('/post_detail/{post_id}', [PostJobController::class, 'jobDetail'])->n
 Route::get('/detail_jobs_apply/{post_id}', [PostJobController::class, 'detailapplyJob'])->name('detail_jobs_apply');
 Route::post('/jobs_apply/{post_id}', [PostJobController::class, 'applyJob'])->name('jobs_apply');
 Route::get('/jobs_submited', [PostJobController::class, 'jobs_submited'])->name('jobs_submited');
+Route::get('/jobs_submited_detail/{post_id}', [PostJobController::class, 'jobs_submited_detail'])->name('jobs_submited_detail');
 //===============================//=============================//
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
